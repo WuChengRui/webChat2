@@ -6,7 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import javax.servlet.http.HttpSession;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +68,10 @@ public class ChatServer {
         System.out.println("message"+ _message);
         JSONObject chat = JSON.parseObject(_message);
         System.out.println("chat: "+ chat);
+        JSONObject file = JSON.parseObject(chat.get("file").toString());
+        if (null != file || null != file.get("fileName") || null == file.get("fileContent")){
+            createFile(file);
+        }
         JSONObject message = JSON.parseObject(chat.get("message").toString());
         if(message.get("to") == null || message.get("to").equals("")){      //如果to为空,则广播;如果不为空,则对指定的用户发送消息
             broadcast(_message);
@@ -107,6 +111,47 @@ public class ChatServer {
     }
 
     /**
+     *  若接收的是文件 则以接收的文件名创建文件，保存内容文件内容到文件中
+     */
+    public void createFile(JSONObject file){
+
+        //JSONObject chat = JSON.parseObject(_message);
+        String fileName = file.get("fileName").toString();
+        String fileContent = file.get("fileContent").toString();
+        // 这里可以保存到数据库中  或者服务器上
+        String path = "E:\\Java\\WebChat\\src\\main\\webapp\\fileUpload";
+        File file1 = new File(path);
+        FileOutputStream fileOutputStream = null;
+        try {
+            if (!file1.exists()){
+                file1.mkdirs();  // 创建目录
+            }
+            File file2 = new File(file1,fileName);
+            if (!file2.exists()){
+                file2.createNewFile();
+            }
+            StringBuffer stringBuffer = new StringBuffer();
+            stringBuffer.append(binstrToChar(fileContent));
+            FileWriter fileWriter = new FileWriter(file2);
+            fileWriter.write(stringBuffer.toString());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                if (null !=fileOutputStream){
+                    fileOutputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+    }
+
+    /**
      * 对特定用户发送消息
      * @param message
      * @param session
@@ -132,6 +177,24 @@ public class ChatServer {
         member.put("type", type);
         member.put("list", list);
         return member.toString();
+    }
+
+    private int[] binstrToIntArray(String binStr) {
+        char[] temp=binStr.toCharArray();
+        int[] result=new int[temp.length];
+        for(int i=0;i<temp.length;i++) {
+            result[i]=temp[i]-48;
+        }
+        return result;
+    }
+
+    private char binstrToChar(String binStr){
+        int[] temp=binstrToIntArray(binStr);
+        int sum=0;
+        for(int i=0; i<temp.length;i++){
+            sum +=temp[temp.length-1-i]<<i;
+        }
+        return (char)sum;
     }
 
     public  int getOnlineCount() {

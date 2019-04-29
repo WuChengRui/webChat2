@@ -7,6 +7,7 @@ import javax.servlet.http.HttpSession;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.*;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -130,10 +131,18 @@ public class ChatServer {
             if (!file2.exists()){
                 file2.createNewFile();
             }
-            StringBuffer stringBuffer = new StringBuffer();
-            stringBuffer.append(binstrToChar(fileContent));
-            FileWriter fileWriter = new FileWriter(file2);
-            fileWriter.write(stringBuffer.toString());
+            //StringBuffer stringBuffer = new StringBuffer();
+            //stringBuffer.append(binstrToChar(fileContent));
+            //FileWriter fileWriter = new FileWriter(file2);
+            //fileWriter.write(stringBuffer.toString());
+            fileContent = new String(fileContent.getBytes(),"UTF-8");
+            byte bytes[]= new byte[1024];
+            bytes=fileContent.getBytes();
+            int b=bytes.length;   //是字节的长度，不是字符串的长度
+            FileOutputStream fos=new FileOutputStream(file2);
+            fos.write(bytes,0,b);
+            fos.write(bytes);
+            fos.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
